@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noEmit": true,
+    "paths": {
+      "@resolvrlabs/sdk": ["../dist/types/index.d.ts"]
+    }
+  },
+  "include": ["consumer-types.ts"]
+}

@@ -1,0 +1,71 @@
+{
+  "name": "@resolvrlabs/sdk",
+  "version": "0.0.1",
+  "description": "Official TypeScript SDK for the Resolvr challenge automation API",
+  "license": "MIT",
+  "author": "ResolvrLabs",
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "browser": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/resolvrlabs/resolvr-typescript.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "bugs": {
+    "url": "https://github.com/resolvrlabs/resolvr-typescript/issues"
+  },
+  "homepage": "https://github.com/resolvrlabs/resolvr-typescript#readme",
+  "keywords": [
+    "resolvr",
+    "typescript",
+    "captcha",
+    "recaptcha-v2",
+    "recaptcha-v3",
+    "cloudflare-turnstile",
+    "cloudflare"
+  ],
+  "scripts": {
+    "clean": "node scripts/clean.mjs",
+    "build": "npm run clean && tsc -p tsconfig.esm.json && esbuild src/index.ts --bundle --platform=neutral --format=cjs --target=es2023 --outfile=dist/cjs/index.js --sourcemap && node scripts/postbuild.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc -p tsconfig.typecheck.json",
+    "test": "npm run format:check && npm run typecheck && npm run build && npm run test:contracts && npm run test:consumers && npm run test:package",
+    "test:contracts": "node test/contracts.mjs",
+    "test:consumers": "node test/consumer-esm.mjs && node test/consumer-cjs.cjs && tsc -p test/tsconfig.json && tsc -p test/tsconfig.cjs.json",
+    "test:integration": "npm run build && node test/integration.mjs",
+    "test:solve": "npm run build && node test/solve-recaptcha-v3.mjs",
+    "test:solve:v2": "npm run build && node test/solve-recaptcha-v2.mjs",
+    "test:package": "node scripts/package-smoke.mjs",
+    "pack:check": "npm pack --dry-run",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "prettier": "^3.9.6",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "strict": true,
+    "noEmit": true,
+    "paths": {
+      "@resolvrlabs/sdk": ["../dist/cjs/index.d.ts"]
+    }
+  },
+  "include": ["consumer-cjs.cts"]
+}
