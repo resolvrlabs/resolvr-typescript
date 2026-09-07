@@ -267,6 +267,15 @@ export type RawTaskResult<TResult = unknown> =
   | RawCompletedTaskResult<TResult>
   | RawFailedTaskResult;
 
+export interface AccountBalance {
+  /** Remaining balance expressed in `currency` units, for example 12.5 for $12.50. */
+  balance: number;
+  /** ISO 4217 currency code, for example "USD". */
+  currency: string;
+  /** Exact response body. */
+  raw: Readonly<Record<string, unknown>>;
+}
+
 export type RetryKind =
   | "same_request"
   | "new_task"
@@ -301,6 +310,25 @@ export type ResolvrEvent =
       delayMs: number;
       reason: "transport" | "timeout" | "rate_limit" | "server";
       httpStatus?: number;
+      timestamp: number;
+    }
+  | {
+      type: "request.retry";
+      operation: "balance";
+      attempt: number;
+      delayMs: number;
+      reason: "transport" | "timeout" | "rate_limit" | "server";
+      httpStatus?: number;
+      timestamp: number;
+    }
+  | {
+      type: "balance.retrieve.started";
+      timestamp: number;
+    }
+  | {
+      type: "balance.retrieved";
+      balance: number;
+      currency: string;
       timestamp: number;
     }
   | {

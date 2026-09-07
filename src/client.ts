@@ -15,6 +15,7 @@ import {
 } from "./transport.js";
 import type { JsonResponse } from "./transport.js";
 import type {
+  AccountBalance,
   CompletedTaskResult,
   FailedTaskResult,
   RawCompletedTaskResult,
@@ -376,6 +377,38 @@ export class ResolvrClient {
     return result;
   }
 
+  async getBalance(options: RequestOptions = {}): Promise<AccountBalance> {
+    this.#emit({ type: "balance.retrieve.started", timestamp: Date.now() });
+    const response = await this.#transport.requestJson({
+      method: "GET",
+      path: "/balance",
+      signal: options.signal,
+      timeoutMs: this.#requestTimeout(options),
+      safeToRetry: true,
+      onRetry: (retry) =>
+        this.#emit({
+          type: "request.retry",
+          operation: "balance",
+          ...retry,
+          timestamp: Date.now(),
+        }),
+    });
+    if (response.status !== 200) {
+      throw new ResolvrProtocolError(
+        `Balance retrieval returned HTTP ${response.status}; expected 200`,
+        { httpStatus: response.status },
+      );
+    }
+    const result = parseBalanceResponse(response.data);
+    this.#emit({
+      type: "balance.retrieved",
+      balance: result.balance,
+      currency: result.currency,
+      timestamp: Date.now(),
+    });
+    return result;
+  }
+
   async #createRawTask(
     wire: Record<string, unknown>,
     options: RequestOptions,
@@ -598,6 +631,18 @@ function parseRawTaskResponse<TResult>(
     return deepFreeze(raw) as RawTaskResult<TResult>;
   }
   throw new ResolvrProtocolError("Task response has an unknown status");
+}
+
+function parseBalanceResponse(value: unknown): AccountBalance {
+  const raw = requireResponseRecord(value, "response");
+  if (typeof raw.balance !== "number" || !Number.isFinite(raw.balance)) {
+    throw new ResolvrProtocolError("response.balance must be a finite number");
+  }
+  return deepFreeze({
+    balance: raw.balance,
+    currency: requireResponseString(raw.currency, "response.currency"),
+    raw: deepFreeze(raw),
+  });
 }
 
 function validateTaskReference<TType extends SupportedTaskType>(

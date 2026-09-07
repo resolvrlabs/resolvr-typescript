@@ -1,5 +1,10 @@
 import assert from "node:assert/strict";
-import { SUPPORTED_TASK_TYPES } from "../dist/esm/index.js";
+import {
+  ResolvrApiError,
+  ResolvrClient,
+  ResolvrProtocolError,
+  SUPPORTED_TASK_TYPES,
+} from "../dist/esm/index.js";
 import { recaptchaV2Definition } from "../dist/esm/tasks/recaptcha-v2.js";
 
 assert.ok(SUPPORTED_TASK_TYPES.includes("recaptcha_v2"));
@@ -49,3 +54,71 @@ const redacted = recaptchaV2Definition.redactRaw({
   data: { token: "secret-token" },
 });
 assert.equal(redacted.data.token, "[REDACTED]");
+
+const originalFetch = globalThis.fetch;
+const jsonResponse = (status, body) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+try {
+  const events = [];
+  const client = new ResolvrClient({
+    apiKey: "test-key",
+    onEvent: (event) => events.push(event),
+  });
+
+  globalThis.fetch = async (url, init) => {
+    assert.equal(url, "https://api.resolvr.com/v1/balance");
+    assert.equal(init.method, "GET");
+    assert.equal(init.headers.Authorization, "Bearer test-key");
+    assert.equal(init.body, undefined);
+    return jsonResponse(200, { balance: 998.577, currency: "USD" });
+  };
+  const balance = await client.getBalance();
+  assert.deepEqual(balance, {
+    balance: 998.577,
+    currency: "USD",
+    raw: { balance: 998.577, currency: "USD" },
+  });
+  assert.ok(Object.isFrozen(balance));
+  assert.ok(Object.isFrozen(balance.raw));
+  assert.deepEqual(
+    events.map((event) => event.type),
+    ["balance.retrieve.started", "balance.retrieved"],
+  );
+  assert.equal(events[1].balance, 998.577);
+  assert.equal(events[1].currency, "USD");
+
+  globalThis.fetch = async () => jsonResponse(200, { balance: "998.577" });
+  await assert.rejects(
+    client.getBalance(),
+    (error) =>
+      error instanceof ResolvrProtocolError &&
+      /response\.balance/.test(error.message),
+  );
+
+  globalThis.fetch = async () => jsonResponse(200, { balance: 1 });
+  await assert.rejects(
+    client.getBalance(),
+    (error) =>
+      error instanceof ResolvrProtocolError &&
+      /response\.currency/.test(error.message),
+  );
+
+  globalThis.fetch = async () =>
+    jsonResponse(401, {
+      error: "ERROR_UNAUTHORIZED",
+      message: "Invalid or missing API key",
+    });
+  await assert.rejects(
+    client.getBalance(),
+    (error) =>
+      error instanceof ResolvrApiError &&
+      error.httpStatus === 401 &&
+      error.code === "ERROR_UNAUTHORIZED" &&
+      error.retryable === false,
+  );
+} finally {
+  globalThis.fetch = originalFetch;
+}

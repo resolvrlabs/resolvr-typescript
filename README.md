@@ -26,6 +26,18 @@
 npm install @resolvrlabs/sdk
 ```
 
+```bash
+yarn add @resolvrlabs/sdk
+```
+
+```bash
+pnpm add @resolvrlabs/sdk
+```
+
+```bash
+bun add @resolvrlabs/sdk
+```
+
 The SDK is intended for server-side TypeScript applications. Keep your API key out of browser bundles and source control.
 
 ## Solve a challenge
@@ -60,6 +72,13 @@ const { ResolvrClient } = require("@resolvrlabs/sdk");
 ```
 
 `result.data.headers` contains the browser identity headers that minted the reCAPTCHA token. Send them with the token when completing the target request.
+
+### Check your balance
+
+```ts
+const { balance, currency } = await resolvr.getBalance();
+console.log(`${balance} ${currency}`);
+```
 
 ### Run a real test
 
@@ -183,6 +202,7 @@ Replay the returned cookies from the same proxy egress and with the same user ag
 - `createTask(task, options?)` creates once and returns a resumable typed handle.
 - `getTask(handle, options?)` retrieves `queued`, `processing`, `completed`, or `failed` state.
 - `solveRaw(task, options?)` and `getRawTask(handle, options?)` preserve exact API field names for the four supported task types.
+- `getBalance(options?)` returns the account balance as `{ balance, currency, raw }`, where `balance` is expressed in `currency` units.
 
 Request cancellation uses `AbortSignal`. Task creation is never retried automatically; safe retrieval requests use bounded retries for transport failures, rate limits, and transient server errors.
 

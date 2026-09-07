@@ -28,6 +28,11 @@ const client = new ResolvrClient({
     : {}),
 });
 
+const balance = await client.getBalance();
+assert.equal(typeof balance.balance, "number");
+assert.equal(typeof balance.currency, "string");
+console.log(`balance: ${balance.balance} ${balance.currency}`);
+
 for (const name of required) {
   const result = await client.solve(fixtures[name]);
   assert.equal(result.status, "completed");

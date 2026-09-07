@@ -12,6 +12,7 @@ export {
 export { DEFAULT_BASE_URL, DEFAULT_REQUEST_TIMEOUT_MS } from "./transport.js";
 export { SUPPORTED_TASK_TYPES } from "./types.js";
 export type {
+  AccountBalance,
   BlockpageMode,
   CloudflareBlockpageSolution,
   CloudflareBlockpageTask,

@@ -32,6 +32,9 @@ async function verifyTypes(): Promise<void> {
     params: { sitekey: "placeholder" },
   });
   raw.data.custom;
+  const balance = await client.getBalance();
+  balance.balance.toFixed(2);
+  balance.currency.toUpperCase();
 }
 
 const exampleSolution: RecaptchaV3Solution = {
