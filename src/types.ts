@@ -119,6 +119,11 @@ export interface CloudflareTurnstileSolution {
   token: string;
 }
 
+/**
+ * The request that completed the block-page flow, returned only when the
+ * flow submitted one. Replaying it is optional: in most cases the returned
+ * `cf_clearance` cookie alone is enough to reach the protected content.
+ */
 export interface FinalRequest {
   url: string;
   method: string;
@@ -127,6 +132,11 @@ export interface FinalRequest {
 
 export interface CloudflareBlockpageSolution {
   cookies: readonly CloudflareCookie[];
+  /**
+   * Optional in both `url` and `html` mode. Try the cookies on their own
+   * first; replay `finalRequest` only if the target still serves the
+   * challenge without it.
+   */
   finalRequest?: FinalRequest;
 }
 

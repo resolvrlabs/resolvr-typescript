@@ -183,7 +183,9 @@ for (const cookie of result.data.cookies) {
 }
 ```
 
-Replay the returned cookies from the same proxy egress and with the same user agent when one was supplied. For a captured challenge page, use `params: { mode: "html", html }`; the completed result then includes `data.finalRequest` for replay.
+Replay the returned cookies from the same proxy egress and with the same user agent when one was supplied. For a captured challenge page, use `params: { mode: "html", html }`.
+
+> **Replaying `finalRequest` is optional in most cases.** `cf_clearance` alone usually clears the interstitial, so a plain request to the protected URL with the returned cookies is often all it takes. The result may also include `data.finalRequest`, the request that completed the flow, when the flow submitted one. Replay it only if the target still serves the challenge without it. It can be absent in either mode, so do not depend on it.
 
 ## Built for real workflows
 

@@ -52,7 +52,7 @@ export const cloudflareBlockpageDefinition: TaskDefinition<"cloudflare_blockpage
     replayRequirements: Object.freeze([
       "same_proxy_egress",
       "preserve_supplied_user_agent",
-      "html_final_request",
+      "optional_final_request",
     ]),
     redactRaw: redactResponseRaw,
     serialize(task: CloudflareBlockpageTask): Record<string, unknown> {
@@ -95,7 +95,7 @@ export const cloudflareBlockpageDefinition: TaskDefinition<"cloudflare_blockpage
     ): TaskContextByType["cloudflare_blockpage"] {
       return { mode: resolveMode(task) };
     },
-    parseData(value: unknown, context): CloudflareBlockpageSolution {
+    parseData(value: unknown): CloudflareBlockpageSolution {
       const data = requireResponseRecord(value, "response.data");
       const cookies = parseCloudflareCookies(data.cookies);
       if (
@@ -129,13 +129,11 @@ export const cloudflareBlockpageDefinition: TaskDefinition<"cloudflare_blockpage
           ),
         };
       }
-      // URL mode may include final_request; it does not invalidate a
-      // clearance-bearing solve.
-      if (context?.mode === "html" && finalRequest === undefined) {
-        throw new ResolvrProtocolError(
-          "HTML-mode block-page result must contain final_request",
-        );
-      }
+      // final_request is optional in both modes. A clearance-bearing solve is
+      // complete on its own: cf_clearance is usually enough to reach the
+      // protected content, and the completing request is only returned when
+      // the flow submitted one. Neither its presence nor its absence
+      // invalidates the solve.
       return finalRequest === undefined
         ? { cookies }
         : { cookies, finalRequest };

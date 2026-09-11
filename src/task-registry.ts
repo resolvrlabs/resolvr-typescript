@@ -27,7 +27,7 @@ export type ReplayRequirement =
   | "immediate_single_use_token"
   | "same_proxy_egress"
   | "preserve_supplied_user_agent"
-  | "html_final_request";
+  | "optional_final_request";
 
 const registry = Object.freeze({
   recaptcha_v2: recaptchaV2Definition,

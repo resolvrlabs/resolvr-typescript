@@ -6,6 +6,7 @@ import {
   SUPPORTED_TASK_TYPES,
 } from "../dist/esm/index.js";
 import { recaptchaV2Definition } from "../dist/esm/tasks/recaptcha-v2.js";
+import { cloudflareBlockpageDefinition } from "../dist/esm/tasks/cloudflare-blockpage.js";
 
 assert.ok(SUPPORTED_TASK_TYPES.includes("recaptcha_v2"));
 
@@ -54,6 +55,48 @@ const redacted = recaptchaV2Definition.redactRaw({
   data: { token: "secret-token" },
 });
 assert.equal(redacted.data.token, "[REDACTED]");
+
+// final_request is optional in both block-page modes: cf_clearance alone is a
+// complete solve.
+const clearanceCookies = [{ name: "cf_clearance", value: "clearance" }];
+for (const mode of ["url", "html"]) {
+  assert.deepEqual(
+    cloudflareBlockpageDefinition.parseData(
+      { cookies: clearanceCookies },
+      { mode },
+    ),
+    { cookies: clearanceCookies },
+  );
+  assert.deepEqual(
+    cloudflareBlockpageDefinition.parseData(
+      {
+        cookies: clearanceCookies,
+        final_request: {
+          url: "https://example.com/protected",
+          method: "POST",
+          body: "",
+        },
+      },
+      { mode },
+    ),
+    {
+      cookies: clearanceCookies,
+      finalRequest: {
+        url: "https://example.com/protected",
+        method: "POST",
+        body: "",
+      },
+    },
+  );
+}
+assert.throws(
+  () =>
+    cloudflareBlockpageDefinition.parseData(
+      { cookies: [{ name: "other", value: "x" }] },
+      { mode: "url" },
+    ),
+  /cf_clearance/,
+);
 
 const originalFetch = globalThis.fetch;
 const jsonResponse = (status, body) =>
