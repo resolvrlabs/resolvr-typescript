@@ -17,7 +17,7 @@ const wire = recaptchaV2Definition.serialize({
   params: {
     siteKey: "site-key",
     enterprise: false,
-    data: { s: "" },
+    data: { action: "login", s: "" },
   },
 });
 assert.deepEqual(wire, {
@@ -27,9 +27,34 @@ assert.deepEqual(wire, {
   params: {
     sitekey: "site-key",
     enterprise: false,
-    data: { s: "" },
+    data: { action: "login", s: "" },
   },
 });
+
+// data.action is optional and rides alone; a non-string is rejected client-side.
+assert.deepEqual(
+  recaptchaV2Definition.serialize({
+    type: "recaptcha_v2",
+    url: "https://example.com/login",
+    proxy: "http://user:pass@proxy.example.net:8080",
+    params: {
+      siteKey: "site-key",
+      enterprise: true,
+      data: { action: "login" },
+    },
+  }).params,
+  { sitekey: "site-key", enterprise: true, data: { action: "login" } },
+);
+assert.throws(
+  () =>
+    recaptchaV2Definition.serialize({
+      type: "recaptcha_v2",
+      url: "https://example.com/login",
+      proxy: "http://user:pass@proxy.example.net:8080",
+      params: { siteKey: "site-key", data: { action: 1 } },
+    }),
+  /task\.params\.data\.action/,
+);
 
 assert.deepEqual(recaptchaV2Definition.parseData({ token: "secret-token" }), {
   token: "secret-token",

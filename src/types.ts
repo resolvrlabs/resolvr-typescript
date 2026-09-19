@@ -25,6 +25,7 @@ export interface RecaptchaV2Task {
     siteKey: string;
     enterprise?: boolean;
     data?: {
+      action?: string;
       s?: string;
     };
   };

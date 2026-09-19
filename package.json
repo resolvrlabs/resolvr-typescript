@@ -1,6 +1,6 @@
 {
   "name": "@resolvrlabs/sdk",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Official TypeScript SDK for the Resolvr challenge automation API",
   "license": "MIT",
   "author": "ResolvrLabs",

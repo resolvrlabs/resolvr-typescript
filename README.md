@@ -140,7 +140,7 @@ const result = await resolvr.solve({
   params: {
     siteKey: "6Lc...",
     enterprise: false,
-    data: { s: "" },
+    data: { action: "login", s: "" },
   },
 });
 

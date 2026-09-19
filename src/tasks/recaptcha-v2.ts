@@ -51,6 +51,11 @@ export const recaptchaV2Definition: TaskDefinition<"recaptcha_v2"> = {
         throw new ResolvrValidationError("task.params.data must be an object");
       }
       const data: Record<string, unknown> = {};
+      const action = optionalString(
+        task.params.data.action,
+        "task.params.data.action",
+      );
+      if (action !== undefined) data.action = action;
       const s = optionalString(task.params.data.s, "task.params.data.s");
       if (s !== undefined) data.s = s;
       params.data = data;
