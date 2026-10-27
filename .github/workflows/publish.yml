@@ -1,14 +1,17 @@
 name: Publish
 
-# Publishes to npm when run by hand (Actions > Publish > Run workflow) on main
-# and package.json carries a version that is not on the registry yet. Pushes
-# never publish, and runs with an already-published version are a no-op.
-# Release flow: bump `version`, merge to main, then run this workflow.
+# Stages a release on npm when run by hand (Actions > Publish > Run workflow)
+# on main and package.json carries a version that is not on the registry yet.
+# Pushes never publish, and runs with an already-published version are a no-op.
+# Release flow: bump `version`, merge to main, run this workflow, then approve
+# the staged version on npmjs.com with 2FA; only then is it installable. Do not
+# run it again before approving: a staged version still counts as unpublished,
+# so the run would stage it twice and fail.
 #
 # Authentication is npm trusted publishing (OIDC): no token secret is stored in
 # the repo, and every release ships a provenance attestation. The trusted
 # publisher must be configured once on npmjs.com for this repo and workflow
-# file name.
+# file name, and only permits `npm stage publish`.
 #
 # Only resolvrlabs/resolvr-typescript publishes; the job is skipped in forks.
 
@@ -38,7 +41,7 @@ jobs:
           registry-url: https://registry.npmjs.org
           cache: npm
 
-      # Trusted publishing needs npm 11.5.1 or later. Pinned to a major so a new
+      # Staged publishing needs npm 11.15.0 or later. Pinned to a major so a new
       # npm major cannot change publishing behaviour unannounced.
       - run: npm install -g npm@11
 
@@ -51,7 +54,7 @@ jobs:
             echo "$name@$version is already on npm; nothing to publish"
             echo "publish=false" >> "$GITHUB_OUTPUT"
           else
-            echo "$name@$version is new; publishing"
+            echo "$name@$version is new; staging"
             echo "publish=true" >> "$GITHUB_OUTPUT"
             echo "version=$version" >> "$GITHUB_OUTPUT"
           fi
@@ -63,8 +66,9 @@ jobs:
         run: npm test
 
       - if: steps.check.outputs.publish == 'true'
-        run: npm publish
+        run: npm stage publish --provenance
 
+      # Tags the commit that was staged; the version goes live on approval.
       - if: steps.check.outputs.publish == 'true'
         name: Tag the release
         run: |
