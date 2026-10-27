@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const temporary = await mkdtemp(join(tmpdir(), "resolvr-sdk-package-"));
 const cache = join(temporary, "npm-cache");
@@ -21,16 +22,26 @@ function run(command, args, cwd) {
   return result.stdout;
 }
 
+// Run npm through Node: on Windows `npm` is a .cmd shim that spawnSync cannot
+// start without a shell. npm sets npm_execpath when it runs a script.
+function npm(args, cwd) {
+  const cli = process.env.npm_execpath;
+  return cli
+    ? run(process.execPath, [cli, ...args], cwd)
+    : run("npm", args, cwd);
+}
+
 try {
-  const packageRoot = new URL("../", import.meta.url).pathname;
+  const packageRoot = fileURLToPath(new URL("../", import.meta.url));
   const packed = JSON.parse(
-    run(
-      "npm",
-      ["pack", "--json", "--pack-destination", temporary],
-      packageRoot,
-    ),
+    npm(["pack", "--json", "--pack-destination", temporary], packageRoot),
   );
-  const packagedFiles = packed[0].files.map((file) => file.path);
+  // npm 11 prints an array of results; npm 12 prints an object keyed by name.
+  const [manifest] = Array.isArray(packed) ? packed : Object.values(packed);
+  if (!manifest?.files) {
+    throw new Error("npm pack --json returned an unrecognised shape");
+  }
+  const packagedFiles = manifest.files.map((file) => file.path);
   for (const required of [
     "dist/esm/index.js",
     "dist/esm/index.d.ts",
@@ -60,7 +71,7 @@ try {
       );
     }
   }
-  const tarball = join(temporary, packed[0].filename);
+  const tarball = join(temporary, manifest.filename);
   const tsc = join(packageRoot, "node_modules/typescript/lib/tsc.js");
   const install = join(temporary, "consumer");
   await writeFile(
@@ -72,7 +83,7 @@ try {
     join(install, "package.json"),
     JSON.stringify({ private: true, type: "module" }),
   );
-  run("npm", ["install", "--ignore-scripts", tarball], install);
+  npm(["install", "--ignore-scripts", tarball], install);
   await writeFile(
     join(install, "esm.mjs"),
     'import { ResolvrClient } from "@resolvrlabs/sdk";\nconst client = new ResolvrClient({ apiKey: "smoke" });\nif (!client.apiBaseUrl.endsWith("/v1")) process.exit(1);\n',

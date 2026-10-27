@@ -1,18 +1,18 @@
 name: Publish
 
-# Publishes to npm whenever main carries a package.json version that is not on
-# the registry yet. Release flow: bump `version`, publish the repo as usual, and
-# this workflow does the rest. Pushes with an already-published version are a
-# no-op, so ordinary commits never publish anything.
+# Publishes to npm when run by hand (Actions > Publish > Run workflow) on main
+# and package.json carries a version that is not on the registry yet. Pushes
+# never publish, and runs with an already-published version are a no-op.
+# Release flow: bump `version`, merge to main, then run this workflow.
 #
 # Authentication is npm trusted publishing (OIDC): no token secret is stored in
 # the repo, and every release ships a provenance attestation. The trusted
 # publisher must be configured once on npmjs.com for this repo and workflow
-# file name (see the deploy README).
+# file name.
+#
+# Only resolvrlabs/resolvr-typescript publishes; the job is skipped in forks.
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -24,21 +24,23 @@ concurrency:
 
 jobs:
   publish:
+    if: github.repository == 'resolvrlabs/resolvr-typescript' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write # push the release tag
       id-token: write # OIDC for trusted publishing and provenance
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
           cache: npm
 
-      # Trusted publishing needs npm 11.5.1 or later.
-      - run: npm install -g npm@latest
+      # Trusted publishing needs npm 11.5.1 or later. Pinned to a major so a new
+      # npm major cannot change publishing behaviour unannounced.
+      - run: npm install -g npm@11
 
       - name: Check whether this version is already published
         id: check

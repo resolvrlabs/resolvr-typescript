@@ -11,7 +11,7 @@ const task: CloudflareBlockpageTask = {
   type: "cloudflare_blockpage",
   url: "https://example.test",
   proxy: "http://proxy.example.test:8080",
-  params: { html: "<html>challenge</html>" },
+  params: { mode: "url" },
 };
 const v2Task: RecaptchaV2Task = {
   type: "recaptcha_v2",

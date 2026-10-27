@@ -661,7 +661,7 @@ function validateTaskReference<TType extends SupportedTaskType>(
         "taskReference.context is only valid for cloudflare_blockpage",
       );
     }
-    if (value.context.mode !== "url" && value.context.mode !== "html") {
+    if (value.context.mode !== "url") {
       throw new ResolvrValidationError("taskReference.context.mode is invalid");
     }
   }
@@ -686,7 +686,11 @@ function validateRawTask(value: unknown): Record<string, unknown> {
   }
   validateTargetUrl(value.url, "rawTask.url");
   validateProxy(value.proxy, "rawTask.proxy");
-  if (!isRecord(value.params)) {
+  // Only cloudflare_blockpage may omit params; it is sent exactly as given.
+  if (
+    !isRecord(value.params) &&
+    !(value.params === undefined && type === "cloudflare_blockpage")
+  ) {
     throw new ResolvrValidationError("rawTask.params must be an object");
   }
   serializeJsonBody(value);

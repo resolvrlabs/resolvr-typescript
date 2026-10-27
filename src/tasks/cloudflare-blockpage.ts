@@ -21,27 +21,22 @@ import {
 } from "./shared.js";
 
 function resolveMode(task: CloudflareBlockpageTask): BlockpageMode {
-  const params = task.params as Record<string, unknown>;
-  const mode = params.mode;
-  if (mode !== undefined && mode !== "url" && mode !== "html") {
-    throw new ResolvrValidationError("task.params.mode must be url or html");
-  }
-  const resolved = mode ?? (params.html !== undefined ? "html" : "url");
-  if (resolved === "html") {
-    requireResponseStringAsInput(params.html, "task.params.html");
-  } else if (params.html !== undefined) {
+  const params = (task.params ?? {}) as Record<string, unknown>;
+  // html mode is not currently supported by the API.
+  if (params.mode === "html" || params.html !== undefined) {
     throw new ResolvrValidationError(
-      "task.params.html is only accepted in html mode",
+      "html mode is not currently supported for cloudflare_blockpage",
     );
   }
-  return resolved;
+  if (params.mode !== undefined && params.mode !== "url") {
+    throw new ResolvrValidationError("task.params.mode must be url");
+  }
+  return "url";
 }
 
-function requireResponseStringAsInput(value: unknown, path: string): string {
+function requireNonEmptyInput(value: unknown, path: string): string {
   if (typeof value !== "string" || value.length === 0) {
-    throw new ResolvrValidationError(
-      `${path} must be a non-empty string in html mode`,
-    );
+    throw new ResolvrValidationError(`${path} must be a non-empty string`);
   }
   return value;
 }
@@ -61,19 +56,13 @@ export const cloudflareBlockpageDefinition: TaskDefinition<"cloudflare_blockpage
           "block-page cookies belong under task.params.cookies",
         );
       }
-      if (!isRecord(task.params)) {
+      // params may be omitted entirely; the wire still carries mode "url".
+      if (task.params !== undefined && !isRecord(task.params)) {
         throw new ResolvrValidationError("task.params must be an object");
       }
-      const mode = resolveMode(task);
-      const params: Record<string, unknown> = { mode };
-      if (mode === "html") {
-        params.html = requireResponseStringAsInput(
-          task.params.html,
-          "task.params.html",
-        );
-      }
+      const params: Record<string, unknown> = { mode: resolveMode(task) };
       const cookies = serializeCloudflareCookies(
-        task.params.cookies,
+        task.params?.cookies,
         "task.params.cookies",
       );
       if (cookies !== undefined) params.cookies = cookies;
@@ -86,7 +75,7 @@ export const cloudflareBlockpageDefinition: TaskDefinition<"cloudflare_blockpage
       const userAgent =
         task.userAgent === undefined
           ? undefined
-          : requireResponseStringAsInput(task.userAgent, "task.userAgent");
+          : requireNonEmptyInput(task.userAgent, "task.userAgent");
       if (userAgent !== undefined) wire.user_agent = userAgent;
       return wire;
     },
@@ -129,7 +118,7 @@ export const cloudflareBlockpageDefinition: TaskDefinition<"cloudflare_blockpage
           ),
         };
       }
-      // final_request is optional in both modes. A clearance-bearing solve is
+      // final_request is optional. A clearance-bearing solve is
       // complete on its own: cf_clearance is usually enough to reach the
       // protected content, and the completing request is only returned when
       // the flow submitted one. Neither its presence nor its absence

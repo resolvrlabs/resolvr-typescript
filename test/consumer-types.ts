@@ -11,7 +11,7 @@ const task: CloudflareBlockpageTask = {
   type: "cloudflare_blockpage",
   url: "https://example.test",
   proxy: "http://proxy.example.test:8080",
-  params: { html: "<html>challenge</html>" },
+  params: { mode: "url" },
 };
 const v2Task: RecaptchaV2Task = {
   type: "recaptcha_v2",
@@ -23,6 +23,13 @@ const v2Task: RecaptchaV2Task = {
 async function verifyTypes(): Promise<void> {
   const result = await client.solve(task);
   result.data.cookies.at(0)?.name;
+  // params may be omitted for the block page.
+  const urlModeResult = await client.solve({
+    type: "cloudflare_blockpage",
+    url: "https://example.test",
+    proxy: "http://proxy.example.test:8080",
+  });
+  urlModeResult.data.finalRequest?.url;
   const v2Result = await client.solve(v2Task);
   v2Result.data.token;
   const raw = await client.solveRaw<{ custom: true }>({

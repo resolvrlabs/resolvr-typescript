@@ -79,13 +79,6 @@ export interface CloudflareTurnstileTask {
 
 export interface CloudflareBlockpageUrlParams {
   mode?: "url";
-  html?: never;
-  cookies?: CloudflareCookie[];
-}
-
-export interface CloudflareBlockpageHtmlParams {
-  mode?: "html";
-  html: string;
   cookies?: CloudflareCookie[];
 }
 
@@ -93,7 +86,8 @@ export interface CloudflareBlockpageTask {
   type: "cloudflare_blockpage";
   url: string;
   proxy: string;
-  params: CloudflareBlockpageUrlParams | CloudflareBlockpageHtmlParams;
+  /** Optional; omitting it solves in url mode. */
+  params?: CloudflareBlockpageUrlParams;
   userAgent?: string;
   /** Block-page cookies belong under params.cookies. */
   cookies?: never;
@@ -134,9 +128,8 @@ export interface FinalRequest {
 export interface CloudflareBlockpageSolution {
   cookies: readonly CloudflareCookie[];
   /**
-   * Optional in both `url` and `html` mode. Try the cookies on their own
-   * first; replay `finalRequest` only if the target still serves the
-   * challenge without it.
+   * Optional. Try the cookies on their own first; replay `finalRequest`
+   * only if the target still serves the challenge without it.
    */
   finalRequest?: FinalRequest;
 }
@@ -163,7 +156,7 @@ export interface TaskTiming {
   totalMs: number;
 }
 
-export type BlockpageMode = "url" | "html";
+export type BlockpageMode = "url";
 
 export interface TaskContextByType {
   recaptcha_v2: undefined;

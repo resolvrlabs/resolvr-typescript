@@ -1,9 +1,9 @@
 {
   "name": "@resolvrlabs/sdk",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Official TypeScript SDK for the Resolvr challenge automation API",
   "license": "MIT",
-  "author": "ResolvrLabs",
+  "author": "Resolvr",
   "type": "module",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
