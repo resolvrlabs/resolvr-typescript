@@ -174,8 +174,6 @@ const result = await resolvr.solve({
   type: "cloudflare_blockpage",
   url: "https://example.com/protected",
   proxy: "http://user:pass@residential.example.net:8080",
-  userAgent: "<YOUR_CHROME_USER_AGENT>",
-  params: { mode: "url" },
 });
 
 for (const cookie of result.data.cookies) {
@@ -183,9 +181,9 @@ for (const cookie of result.data.cookies) {
 }
 ```
 
-Replay the returned cookies from the same proxy egress and with the same user agent when one was supplied. For a captured challenge page, use `params: { mode: "html", html }`.
+`params` may be omitted; the URL is fetched and solved through your proxy. Set the optional `userAgent` to pin a currently supported Chrome user agent. Replay the returned cookies from the same proxy egress and with the same user agent when one was supplied.
 
-> **Replaying `finalRequest` is optional in most cases.** `cf_clearance` alone usually clears the interstitial, so a plain request to the protected URL with the returned cookies is often all it takes. The result may also include `data.finalRequest`, the request that completed the flow, when the flow submitted one. Replay it only if the target still serves the challenge without it. It can be absent in either mode, so do not depend on it.
+> **Replaying `finalRequest` is optional in most cases.** `cf_clearance` alone usually clears the interstitial, so a plain request to the protected URL with the returned cookies is often all it takes. The result may also include `data.finalRequest`, the request that completed the flow, when the flow submitted one. Replay it only if the target still serves the challenge without it. It can be absent, so do not depend on it.
 
 ## Built for real workflows
 
@@ -267,4 +265,4 @@ Never post API keys, proxy credentials, cookies, challenge tokens, captured HTML
 
 ## License
 
-MIT © ResolvrLabs
+MIT © Resolvr

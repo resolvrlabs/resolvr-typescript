@@ -16,7 +16,6 @@ export type {
   BlockpageMode,
   CloudflareBlockpageSolution,
   CloudflareBlockpageTask,
-  CloudflareBlockpageHtmlParams,
   CloudflareBlockpageUrlParams,
   CloudflareCookie,
   CloudflareTurnstileSolution,
